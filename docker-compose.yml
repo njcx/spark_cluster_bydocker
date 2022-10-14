@@ -1,0 +1,52 @@
+version: '3.7'
+services: 
+  master:
+    image: ${PREFIX}spark_master
+    ports: 
+      - '0.0.0.0:7077:7077'
+      - '0.0.0.0:8080:8080'   
+    volumes: 
+      -  '/etc/localtime:/etc/localtime' 
+      -  '/tmp/spark_check_point:/tmp/spark_check_point'
+  worker:
+    environment:
+      MASTER: master
+      CORES: ${CONFIG_CORES}
+      RAM: ${CONFIG_RAM}
+    image: ${PREFIX}spark_worker
+    volumes:  
+      -  '/etc/localtime:/etc/localtime'
+      -  '/tmp/spark_check_point:/tmp/spark_check_point'
+    depends_on: 
+      - master
+  livy:
+    image: ${PREFIX}livy
+    depends_on:
+      - master
+    ports:
+      - '8998:8998'
+    volumes:  
+      -  '/etc/localtime:/etc/localtime'
+  notebook:
+    image: ${PREFIX}notebook
+    ports:
+      - '0.0.0.0:9999:9999'
+    volumes:
+      - 'workbooks:/workbooks'
+    depends_on: 
+      - livy
+volumes: 
+  workbooks:
+    null
+
+
+networks:
+  default:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+      - subnet:  172.212.0.1/16
+
+
+
